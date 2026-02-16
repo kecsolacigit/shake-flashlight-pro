@@ -44,6 +44,83 @@ dependencies {
 }
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.shake.flashlight">
+package com.shake.flashlight;
+
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.hardware.camera2.CameraManager;
+import android.os.IBinder;
+import android.os.Vibrator;
+
+public class ShakeService extends Service implements SensorEventListener {
+
+    private SensorManager sensorManager;
+    private Sensor accelerometer;
+    private CameraManager cameraManager;
+    private String cameraId;
+    private boolean flashlightOn = false;
+    private static final float SHAKE_THRESHOLD = 15.0f;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+
+        cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+
+        try {
+            cameraId = cameraManager.getCameraIdList()[0];
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        float x = event.values[0];
+        float y = event.values[1];
+        float z = event.values[2];
+
+        float acceleration = (float) Math.sqrt(x*x + y*y + z*z);
+
+        if (acceleration > SHAKE_THRESHOLD) {
+            toggleFlashlight();
+        }
+    }
+
+    private void toggleFlashlight() {
+        try {
+            flashlightOn = !flashlightOn;
+            cameraManager.setTorchMode(cameraId, flashlightOn);
+
+            Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+            if (vibrator != null) {
+                vibrator.vibrate(100);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+}
 
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.FLASHLIGHT"/>
