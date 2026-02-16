@@ -127,7 +127,23 @@ public class ShakeService extends Service implements SensorEventListener {
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
 
-    <application
+    <applicationpackage com.shake.flashlight;
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+
+public class BootReceiver extends BroadcastReceiver {
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        if (Intent.ACTION_BOOT_COMPLETED.equals(intent.getAction())) {
+            Intent serviceIntent = new Intent(context, ShakeService.class);
+            context.startService(serviceIntent);
+        }
+    }
+}
+
         android:allowBackup="true"
         android:label="Shake Flashlight Pro"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
